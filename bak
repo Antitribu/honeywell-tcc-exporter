@@ -1,0 +1,69 @@
+#!/usr/bin/python3
+import time
+import calendar
+import os
+import json
+import prometheus_client
+import logging
+import sys
+import evohomeclient
+
+logging.getLogger().setLevel(logging.DEBUG)
+
+EXPORTER_PORT = 9999
+UPDATE_PERIOD = 60
+TCC_USERNAME = os.getenv('TCC_USERNAME')
+TCC_PASSWORD = os.getenv('TCC_PASSWORD')
+
+THERMOSTAT = prometheus_client.Gauge('tcc',
+                                       'device',
+                                          [ 'thermostat',
+                                            'id', 
+                                            'name',
+                                            'setpoint',
+                                            'status',
+                                            'mode'
+                                          ]
+                                    )
+
+client = evohomeclient.EvohomeClient(TCC_USERNAME, TCC_PASSWORD)
+
+def update_cache():
+    temperatures = write_cache()
+    return temperatures
+
+def write_cache():
+    try:
+      tmp_temperatures = client.temperatures()
+      temperatures = tmp_temperatures
+      logging.debug("Setting temps!")
+      for device in temperatures:
+        logging.debug (device)
+        # device_dict = json.loads(device)
+
+        THERMOSTAT.labels(  thermostat=device['thermostat'], 
+                            id=device['id'], 
+                            name=device['name'], 
+                            setpoint=device['setpoint'], 
+                            status=device['status'], 
+                            mode=device['mode']
+                          ).set(device['temp'])
+
+    except requests.exceptions.HTTPError:
+      logging.debug("Couldn't hit API")
+    except:
+      logging.debug("An exception occurred")
+    return temperatures
+
+if __name__ == '__main__':
+    prometheus_client.start_http_server(EXPORTER_PORT)
+    my_metrics = {}
+
+    while True:
+        temperatures = update_cache()
+
+        logging.debug ("Grr")
+        for device in temperatures:
+          logging.debug (device)
+
+        time.sleep(UPDATE_PERIOD)
