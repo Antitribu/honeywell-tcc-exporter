@@ -7,6 +7,8 @@ import logging
 import evohomeclient
 import evohomeclient2
 import requests
+from pathlib import Path
+from datetime import datetime
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -126,9 +128,13 @@ if __name__ == "__main__":
             update_temperatures(my_metrics)
             time.sleep(UPDATE_PERIOD)
     elif TCC_CONFIGOP == "save":
-
+        mypath = '/opt/config_backups/'
+        today = datetime.now()
+        iso_date = today.isoformat()
+        path = Path(mypath)
+        path.mkdir(parents=True, exist_ok=True)
         client = evohomeclient2.EvohomeClient(TCC_USERNAME, TCC_PASSWORD)
-        client.zone_schedules_backup('filename.json')
+        client.zone_schedules_backup(mypath + "tcc_" + iso_date +'_config_backup.json')
     # elif TCC_CONFIGOP == "restore":
     #     client = evohomeclient2.EvohomeClient(TCC_USERNAME, TCC_PASSWORD)
     #     client.zone_schedules_restore('filename.json')
