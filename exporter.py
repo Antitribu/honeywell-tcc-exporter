@@ -115,14 +115,17 @@ def update_temperatures(metrics_dict):
 
 
 if __name__ == "__main__":
+    logging.debug("Starting up")
     prometheus_client.start_http_server(EXPORTER_PORT)
     my_metrics = {}
     my_metrics["status"] = []
     my_metrics["mode"] = []
 
-    print(TCC_CONFIGOP)
+    logging.debug(TCC_CONFIGOP)
 
-    if TCC_CONFIGOP == "":
+    if TCC_CONFIGOP == "stats":
+        logging.debug("Starting up stats")
+
         while True:
             logging.debug("Updating Temps, %s", calendar.timegm(time.gmtime()))
             update_temperatures(my_metrics)
